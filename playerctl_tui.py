@@ -4,7 +4,7 @@ from textual.widgets import Header, Footer, Button
 from textual.containers import Container
 
 class PlayerctlApp(App):
-    """A TUI app to control media playback with Play/Pause, Skip Back, and Skip Forward buttons."""
+    """A TUI app to control media playback and system volume."""
 
     BINDINGS = [
         ("q", "quit", "Quit the app"),
@@ -20,6 +20,17 @@ class PlayerctlApp(App):
         width: 1fr;  /* Make this container take up all available horizontal space */
         layout: vertical; /* Arrange its children (Play/Pause button, Skip buttons container) vertically */
         /* We remove align: center middle here, as it might interfere with distributing height */
+    #volume-buttons-container {
+        height: 1fr;
+        width: 1fr;
+        layout: horizontal;
+    }
+
+    #volume-buttons-container Button {
+        height: 1fr;
+        width: 1fr;
+        align: center middle;
+        margin: 0 1;
     }
 
     #play-pause-button {
@@ -48,7 +59,13 @@ class PlayerctlApp(App):
         """Create child widgets for the app."""
         yield Header()
         with Container(id="main-content"):
+            with Container(id="volume-buttons-container"):
+                yield Button("Mute", id="mute_button", variant="default")
+                yield Button("Vol -", id="vol_down_button", variant="default")
+                yield Button("Vol +", id="vol_up_button", variant="default")
+
             yield Button("Play/Pause", id="play-pause-button", variant="primary")
+
             with Container(id="skip-buttons-container"):
                 yield Button("Rewind 10s", id="rewind_button", variant="default")
                 yield Button("Forward 10s", id="forward_button", variant="default")
@@ -63,13 +80,22 @@ class PlayerctlApp(App):
             command = ["playerctl", "position", "10-"]
         elif event.button.id == "forward_button":
             command = ["playerctl", "position", "10+"]
+        elif event.button.id == "mute_button":
+            # Toggle mute status using wpctl
+            command = ["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"]
+        elif event.button.id == "vol_up_button":
+            # Increase volume by 5% using wpctl
+            command = ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "5%+"]
+        elif event.button.id == "vol_down_button":
+            # Decrease volume by 5% using wpctl
+            command = ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "5%-"]
 
         if command:
             try:
                 subprocess.run(command, check=True)
             except FileNotFoundError:
                 self.bell()
-                self.log(f"{command[0]} not found. Is playerctl installed?")
+                self.log(f"Command '{command[0]}' not found. Is it installed?")
             except subprocess.CalledProcessError as e:
                 self.bell()
                 self.log(f"Error executing command: {' '.join(command)}. Error: {e}")
