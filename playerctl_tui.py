@@ -91,20 +91,20 @@ class PlayerctlApp(App):
                 yield Button("Vol +", id="vol_up_button", variant="default")
 
             # A container for the entire control pad
-            with Container(id="control-pad-container"):
-                # D-pad up button row
-                with Container(id="dpad-row-1"):
-                    yield Button("Up", id="up_arrow_button", variant="default")
-                
-                # D-pad left, select, and right button row
-                with Container(id="dpad-row-2"):
-                    yield Button("Left", id="left_arrow_button", variant="default")
-                    yield Button("Select", id="select_button", variant="primary")
-                    yield Button("Right", id="right_arrow_button", variant="default")
-                    
-                # D-pad down button row
-                with Container(id="dpad-row-3"):
-                    yield Button("Down", id="down_arrow_button", variant="default")
+            # with Container(id="control-pad-container"):
+            #     # D-pad up button row
+            #     with Container(id="dpad-row-1"):
+            #         yield Button("Up", id="up_arrow_button", variant="default")
+            #
+            #     # D-pad left, select, and right button row
+            #     with Container(id="dpad-row-2"):
+            #         yield Button("Left", id="left_arrow_button", variant="default")
+            #         yield Button("Select", id="select_button", variant="primary")
+            #         yield Button("Right", id="right_arrow_button", variant="default")
+            #
+            #     # D-pad down button row
+            #     with Container(id="dpad-row-3"):
+            #         yield Button("Down", id="down_arrow_button", variant="default")
 
             # Bottom row for media playback controls
             with Container(id="media-playback-container"):
