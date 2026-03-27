@@ -36,7 +36,7 @@
               export PATH="$PWD/src:$PATH"
               # Optional: You might want to automatically run your app on entering the shell
               # echo "Type 'python playerctl_tui.py' to run the app."
-              python playerctl_tui.py
+              python playerctl_tui.py ; exit
             '';
           };
         }

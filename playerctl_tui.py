@@ -1,6 +1,6 @@
 import subprocess
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, Button
+from textual.widgets import Header, Footer, Button, Static
 from textual.containers import Container
 
 class PlayerctlApp(App):
@@ -19,6 +19,16 @@ class PlayerctlApp(App):
         height: 1fr; /* This container takes up all space between header/footer */
         width: 1fr;
         layout: vertical; /* Its children are stacked vertically */
+    }
+
+    #now-playing {
+        height: 3;
+        content-align: center middle;
+        text-style: bold;
+        background: $accent;
+        color: $text;
+        border: tall $primary;
+        margin: 1 1;
     }
 
     /* Top row: Volume buttons */
@@ -84,6 +94,7 @@ class PlayerctlApp(App):
         """Create child widgets for the app."""
         yield Header()
         with Container(id="main-content"):
+            yield Static("Loading media info...", id="now-playing")
             # Top row for volume buttons
             with Container(id="volume-buttons-container"):
                 yield Button("Vol -", id="vol_down_button", variant="default")
@@ -108,10 +119,37 @@ class PlayerctlApp(App):
 
             # Bottom row for media playback controls
             with Container(id="media-playback-container"):
+                yield Button("Prev", id="prev_button", variant="default")
                 yield Button("Rewind 10s", id="rewind_button", variant="default")
                 yield Button("Play/Pause", id="play-pause-button", variant="primary")
                 yield Button("Forward 10s", id="forward_button", variant="default")
+                yield Button("Next", id="next_button", variant="default")
         yield Footer()
+
+    def on_mount(self) -> None:
+        """Set up the app on mount."""
+        self.update_now_playing()
+        self.set_interval(1, self.update_now_playing)
+
+    def update_now_playing(self) -> None:
+        """Update the now playing widget."""
+        try:
+            result = subprocess.run(
+                ["playerctl", "metadata", "--format", "{{ artist }} - {{ title }}"],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            metadata = result.stdout.strip()
+            if not metadata or metadata == " - ":
+                metadata = "No media playing"
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            metadata = "No media playing"
+        
+        try:
+            self.query_one("#now-playing", Static).update(metadata)
+        except Exception:
+            pass
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Called when a button is pressed."""
@@ -127,6 +165,10 @@ class PlayerctlApp(App):
             command = ["hyprctl", "dispatch", "movefocus", "r"]
         elif event.button.id == "select_button":
             command = ["hyprctl", "dispatch", "fullscreen", "0"] # Toggle fullscreen
+        elif event.button.id == "prev_button":
+            command = ["playerctl", "previous"]
+        elif event.button.id == "next_button":
+            command = ["playerctl", "next"]
         elif event.button.id == "rewind_button":
             command = ["playerctl", "position", "10-"]
         elif event.button.id == "forward_button":
@@ -143,6 +185,8 @@ class PlayerctlApp(App):
         if command:
             try:
                 subprocess.run(command, check=True)
+                if event.button.id in ["rewind_button", "forward_button", "play-pause-button", "prev_button", "next_button"]:
+                    self.update_now_playing()
             except FileNotFoundError:
                 self.bell()
                 self.log(f"Command '{command[0]}' not found. Is it installed?")
